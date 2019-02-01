@@ -320,7 +320,7 @@ void* thread_main(void *input){
 			lsmtree *LSM=(lsmtree*)lsm_req->params[3];
 			int test_num;
 			switch(lsm_req->type){
-				case DISK_READ_T:
+				case DISK_READ_T://read header (retried request)
 					value=(char*)lsm_req->params[2];
 					pthread_mutex_lock(&gc_read_lock);
 					test_num=thread_level_get(LSM,*key,myth,value,lsm_req,lsm_req->flag);
@@ -336,7 +336,8 @@ void* thread_main(void *input){
 					if(test_num==6)
 						lsm_req->end_req(lsm_req);
 					break;
-				case LR_READ_T:
+
+				case LR_READ_T://read request
 					myth->read_num++;
 					value=(char*)lsm_req->params[2];
 					pthread_mutex_init(&lsm_req->meta_lock,NULL);
@@ -359,11 +360,12 @@ void* thread_main(void *input){
 				case LR_WRITE_T:
 					myth->write_num++;
 					if(is_flush_needed(LSM)){
-						lr_gc_make_req(0);
+						lr_gc_make_req(0); //do compaction
 					}
 					value=(char*)lsm_req->params[2];
 					put(LSM,*key,value,lsm_req);
 					break;
+
 				case LR_DELETE_T:
 					if(is_flush_needed(LSM)){
 						lr_gc_make_req(0);
